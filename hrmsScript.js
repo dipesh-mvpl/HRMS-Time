@@ -4,8 +4,8 @@
 // @version      3.2
 // @description  Show expected completion time + buffer till 07:30 PM (same HRMS style)
 // @match        https://hrms.microvistatech.com/EmployeeDashBoard/*
-// @updateURL    https://github.com/dipesh-mvpl/HRMS-Time/blob/main/hrmsScript.js
-// @downloadURL  https://github.com/dipesh-mvpl/HRMS-Time/blob/main/hrmsScript.js
+// @updateURL    https://raw.githubusercontent.com/dipesh-mvpl/HRMS-Time/refs/heads/main/hrmsScript.js
+// @downloadURL  https://raw.githubusercontent.com/dipesh-mvpl/HRMS-Time/refs/heads/main/hrmsScript.js
 // @grant        none
 // ==/UserScript==
 
