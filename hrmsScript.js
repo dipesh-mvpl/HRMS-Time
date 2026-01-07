@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         HRMS Expected Completion Time
-// @namespace    https://github.com/dipesh-mvpl/hrms-tampermonkey
-// @version      3.1
+// @namespace    https://github.com/your-username/hrms-tampermonkey
+// @version      3.2
 // @description  Show expected completion time + buffer till 07:30 PM (same HRMS style)
 // @match        https://hrms.microvistatech.com/EmployeeDashBoard/*
-// @updateURL    https://raw.githubusercontent.com/dipesh-mvpl/HRMS-Time/refs/heads/main/hrmsScript.js?token=GHSAT0AAAAAADSSAYTUDPFOEGZRSP65FWIW2K5AOFA
-// @downloadURL  https://raw.githubusercontent.com/dipesh-mvpl/HRMS-Time/refs/heads/main/hrmsScript.js?token=GHSAT0AAAAAADSSAYTUDPFOEGZRSP65FWIW2K5AOFA
+// @updateURL    https://github.com/dipesh-mvpl/HRMS-Time/blob/main/hrmsScript.js
+// @downloadURL  https://github.com/dipesh-mvpl/HRMS-Time/blob/main/hrmsScript.js
 // @grant        none
 // ==/UserScript==
 
@@ -63,7 +63,7 @@
         const expectedLine = remainingElement.cloneNode(true);
         expectedLine.innerText = cleanFormatted;
 
-        remainingElement.insertAdjacentElement("afterend", expectedLine);
+       //remainingElement.insertAdjacentElement("afterend", expectedLine);
 
         // ⭐ Line 2: Buffer time till 07:30 PM
         const officeLeave = new Date(expectedTime);
@@ -83,7 +83,8 @@
         const bufferLine = remainingElement.cloneNode(true);
         bufferLine.innerText = bufferText;
 
-        expectedLine.insertAdjacentElement("afterend", bufferLine);
+        //expectedLine.insertAdjacentElement("afterend", bufferLine);
+        remainingElement.insertAdjacentElement("afterend", bufferLine);
     }
 
     setTimeout(run, 1200);
