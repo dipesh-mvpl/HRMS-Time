@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HRMS Expected Completion Time
 // @namespace    https://github.com/your-username/hrms-tampermonkey
-// @version      3.2
+// @version      3.3
 // @description  Show expected completion time + buffer till 07:30 PM (same HRMS style)
 // @match        https://hrms.microvistatech.com/EmployeeDashBoard/*
 // @updateURL    https://raw.githubusercontent.com/dipesh-mvpl/HRMS-Time/main/hrms8Script.js
