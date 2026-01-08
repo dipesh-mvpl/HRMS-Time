@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HRMS Buffer Minutes Only
 // @namespace    https://github.com/dipesh-mvpl/hrms-tampermonkey
-// @version      3.4
+// @version      3.5
 // @description  Show ONLY buffer minutes till 07:30 PM (no time display)
 // @match        https://hrms.microvistatech.com/EmployeeDashBoard/*
 // @updateURL    https://raw.githubusercontent.com/dipesh-mvpl/HRMS-Time/main/hrmsTime.js
