@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HRMS Buffer Minutes Only
 // @namespace    https://github.com/dipesh-mvpl/hrms-tampermonkey
-// @version      3.5
+// @version      3.6
 // @description  Show ONLY buffer minutes till 07:30 PM (no time display)
 // @match        https://hrms.microvistatech.com/*
 // @updateURL    https://raw.githubusercontent.com/dipesh-mvpl/HRMS-Time/main/hrmsScript.js
@@ -76,8 +76,8 @@
    ========================================================= */
 (function () {
 
-    const TOTAL_REQUIRED = 510;
-    const OFFICE_END = 19 * 60 + 30;
+    const TOTAL_REQUIRED = 510; // 8h 30m
+    const OFFICE_END = 19 * 60 + 30; // 07:30 PM
 
     function toMinutes(hm) {
         const [h, m] = hm.split(":").map(Number);
@@ -89,8 +89,7 @@
         if (!modal) return;
 
         const rows = modal.querySelectorAll("table tbody tr");
-        if (rows.length < 3) {
-            // Modal loads async → retry
+        if (rows.length < 2) {
             setTimeout(calculateAndInject, 300);
             return;
         }
@@ -98,10 +97,11 @@
         const dateLabel = modal.querySelector("label");
         if (!dateLabel || dateLabel.dataset.bufferAdded) return;
 
-        let firstIn = null;
-        let breakMinutes = 0;
+        let workedMinutes = 0;
+        let lastOutTime = null;
 
-        // Find first IN
+        let lastIn = null;
+
         rows.forEach(r => {
             const td = r.querySelectorAll("td");
             if (td.length !== 2) return;
@@ -109,36 +109,39 @@
             const time = td[0].innerText.trim();
             const status = td[1].innerText.trim().toLowerCase();
 
-            if (status === "in" && /^\d{2}:\d{2}$/.test(time) && firstIn === null) {
-                firstIn = toMinutes(time);
+            if (!/^\d{2}:\d{2}$/.test(time)) return;
+
+            const minutes = toMinutes(time);
+
+            if (status === "in") {
+                lastIn = minutes;
+            }
+
+            if (status === "out" && lastIn !== null) {
+                workedMinutes += minutes - lastIn;
+                lastOutTime = minutes;
+                lastIn = null;
             }
         });
 
-        if (firstIn === null) return;
-
-        // Calculate breaks (out → next in)
-        for (let i = 0; i < rows.length - 1; i++) {
-            const cur = rows[i].querySelectorAll("td");
-            const next = rows[i + 1].querySelectorAll("td");
-
-            if (cur.length !== 2 || next.length !== 2) continue;
-
-            const curTime = cur[0].innerText.trim();
-            const curStatus = cur[1].innerText.trim().toLowerCase();
-            const nextTime = next[0].innerText.trim();
-            const nextStatus = next[1].innerText.trim().toLowerCase();
-
-            if (
-                curStatus === "out" &&
-                nextStatus === "in" &&
-                /^\d{2}:\d{2}$/.test(curTime) &&
-                /^\d{2}:\d{2}$/.test(nextTime)
-            ) {
-                breakMinutes += toMinutes(nextTime) - toMinutes(curTime);
-            }
+        // If employee is still IN → assume working till now
+        if (lastIn !== null) {
+            const now = new Date();
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+            workedMinutes += nowMinutes - lastIn;
+            lastOutTime = nowMinutes;
         }
 
-        const expectedEnd = firstIn + TOTAL_REQUIRED + breakMinutes;
+        const remaining = TOTAL_REQUIRED - workedMinutes;
+
+        let expectedEnd;
+
+        if (remaining > 0) {
+            expectedEnd = lastOutTime + remaining;
+        } else {
+            expectedEnd = lastOutTime; // already overtime
+        }
+
         const buffer = OFFICE_END - expectedEnd;
 
         const span = document.createElement("span");
@@ -154,17 +157,17 @@
         dateLabel.dataset.bufferAdded = "true";
     }
 
-    // Hook View Log click (SPA-safe)
     document.addEventListener("click", function (e) {
         if (e.target?.innerText?.trim() === "View Log") {
             setTimeout(() => {
                 const modal = document.querySelector("#inOutDetailsModel");
                 const label = modal?.querySelector("label");
                 if (label) delete label.dataset.bufferAdded;
-
                 calculateAndInject();
             }, 400);
         }
     });
 
 })();
+
+
