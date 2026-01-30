@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HRMS Buffer Minutes Only
 // @namespace    https://github.com/dipesh-mvpl/hrms-tampermonkey
-// @version      3.7
+// @version      3.8
 // @description  Show ONLY buffer minutes till 07:30 PM (no time display)
 // @match        https://hrms.microvistatech.com/*
 // @updateURL    https://raw.githubusercontent.com/dipesh-mvpl/HRMS-Time/main/hrmsScript.js
@@ -139,7 +139,7 @@
         if (remaining > 0) {
             expectedEnd = lastOutTime + remaining;
         } else {
-            expectedEnd = lastOutTime; // already overtime
+            expectedEnd = lastOutTime; 
         }
 
         const buffer = OFFICE_END - expectedEnd;
