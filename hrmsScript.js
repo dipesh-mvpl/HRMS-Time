@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HRMS Buffer Minutes Only
 // @namespace    https://github.com/dipesh-mvpl/hrms-tampermonkey
-// @version      3.6
+// @version      3.7
 // @description  Show ONLY buffer minutes till 07:30 PM (no time display)
 // @match        https://hrms.microvistatech.com/*
 // @updateURL    https://raw.githubusercontent.com/dipesh-mvpl/HRMS-Time/main/hrmsScript.js
@@ -59,7 +59,7 @@
         if (bufferMinutes > 0) {
             bufferLine.innerText = `${bufferMinutes}`;
         } else if (bufferMinutes < 0) {
-            bufferLine.innerText = `${Math.abs(bufferMinutes)} min overtime`;
+            bufferLine.innerText = `+ ${Math.abs(bufferMinutes)}`;
         } else {
             bufferLine.innerText = `0 min`;
         }
@@ -150,7 +150,7 @@
 
         span.innerText =
             buffer > 0 ? `${buffer}`
-          : buffer < 0 ? `(Overtime: ${Math.abs(buffer)})`
+          : buffer < 0 ? `(+ ${Math.abs(buffer)})`
           : `(0 min)`;
 
         dateLabel.appendChild(span);
