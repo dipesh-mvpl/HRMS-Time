@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         HRMS Buffer Minutes Only
 // @namespace    https://github.com/dipesh-mvpl/hrms-tampermonkey
-// @version      3.9
-// @description  Show ONLY buffer minutes till 07:30 PM (no time display)
+// @version      4.0
+// @description  Show buffer time (HH:mm) till 07:30 PM
 // @match        https://hrms.microvistatech.com/*
 // @updateURL    https://raw.githubusercontent.com/dipesh-mvpl/HRMS-Time/main/hrmsScript.js
 // @downloadURL  https://raw.githubusercontent.com/dipesh-mvpl/HRMS-Time/main/hrmsScript.js
@@ -10,7 +10,18 @@
 // ==/UserScript==
 
 /* =========================================================
-   DASHBOARD LOGIC (UNCHANGED)
+   HELPERS
+   ========================================================= */
+function toHHMM(min) {
+    const sign = min < 0 ? "-" : "";
+    min = Math.abs(min);
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return sign + String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+}
+
+/* =========================================================
+   DASHBOARD LOGIC
    ========================================================= */
 (function () {
 
@@ -48,21 +59,13 @@
         const loginTime = new Date(now.getTime() - workingMinutes * 60000);
         const expectedTime = new Date(loginTime.getTime() + TOTAL_REQUIRED * 60000);
 
-        // Fixed office leave time → 07:30 PM
         const officeLeave = new Date(expectedTime);
         officeLeave.setHours(19, 30, 0, 0);
 
         const bufferMinutes = Math.round((officeLeave - expectedTime) / 60000);
 
         const bufferLine = remainingElement.cloneNode(true);
-
-        if (bufferMinutes > 0) {
-            bufferLine.innerText = `${bufferMinutes}`;
-        } else if (bufferMinutes < 0) {
-            bufferLine.innerText = `+ ${Math.abs(bufferMinutes)}`;
-        } else {
-            bufferLine.innerText = `0 min`;
-        }
+        bufferLine.innerText = toHHMM(bufferMinutes);
 
         remainingElement.insertAdjacentElement("afterend", bufferLine);
     }
@@ -72,12 +75,12 @@
 })();
 
 /* =========================================================
-   MODAL LOGIC (BREAK-AWARE, CLICK BASED)
+   MODAL LOGIC
    ========================================================= */
 (function () {
 
-    const TOTAL_REQUIRED = 510; // 8h 30m
-    const OFFICE_END = 19 * 60 + 30; // 07:30 PM
+    const TOTAL_REQUIRED = 510;
+    const OFFICE_END = 19 * 60 + 30;
 
     function toMinutes(hm) {
         const [h, m] = hm.split(":").map(Number);
@@ -99,7 +102,6 @@
 
         let workedMinutes = 0;
         let lastOutTime = null;
-
         let lastIn = null;
 
         rows.forEach(r => {
@@ -108,14 +110,11 @@
 
             const time = td[0].innerText.trim();
             const status = td[1].innerText.trim().toLowerCase();
-
             if (!/^\d{2}:\d{2}$/.test(time)) return;
 
             const minutes = toMinutes(time);
 
-            if (status === "in") {
-                lastIn = minutes;
-            }
+            if (status === "in") lastIn = minutes;
 
             if (status === "out" && lastIn !== null) {
                 workedMinutes += minutes - lastIn;
@@ -124,7 +123,6 @@
             }
         });
 
-        // If employee is still IN → assume working till now
         if (lastIn !== null) {
             const now = new Date();
             const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -133,32 +131,22 @@
         }
 
         const remaining = TOTAL_REQUIRED - workedMinutes;
-
-        // expected end time based on work done
         const expectedEnd = remaining > 0
-        ? (lastOutTime ?? 0) + remaining
-        : lastOutTime;
+            ? (lastOutTime ?? 0) + remaining
+            : lastOutTime;
 
-        // base buffer
         let buffer = OFFICE_END - expectedEnd;
 
-        // ⛔ employee is OUT → buffer should reduce with real time
         if (lastIn === null && lastOutTime !== null) {
             const now = new Date();
             const nowMinutes = now.getHours() * 60 + now.getMinutes();
-
-            const afterOut = Math.max(0, nowMinutes - lastOutTime);
-            buffer -= afterOut;
+            buffer -= Math.max(0, nowMinutes - lastOutTime);
         }
 
         const span = document.createElement("span");
         span.style.marginLeft = "10px";
         span.style.fontWeight = "600";
-
-        span.innerText =
-            buffer > 0 ? `${buffer}`
-          : buffer < 0 ? `(+ ${Math.abs(buffer)})`
-          : `(0 min)`;
+        span.innerText = toHHMM(buffer);
 
         dateLabel.appendChild(span);
         dateLabel.dataset.bufferAdded = "true";
@@ -167,8 +155,7 @@
     document.addEventListener("click", function (e) {
         if (e.target?.innerText?.trim() === "View Log") {
             setTimeout(() => {
-                const modal = document.querySelector("#inOutDetailsModel");
-                const label = modal?.querySelector("label");
+                const label = document.querySelector("#inOutDetailsModel label");
                 if (label) delete label.dataset.bufferAdded;
                 calculateAndInject();
             }, 400);
