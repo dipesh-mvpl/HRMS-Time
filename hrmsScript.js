@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HRMS Buffer Minutes Only
 // @namespace    https://github.com/dipesh-mvpl/hrms-tampermonkey
-// @version      3.8
+// @version      3.9
 // @description  Show ONLY buffer minutes till 07:30 PM (no time display)
 // @match        https://hrms.microvistatech.com/*
 // @updateURL    https://raw.githubusercontent.com/dipesh-mvpl/HRMS-Time/main/hrmsScript.js
@@ -134,15 +134,22 @@
 
         const remaining = TOTAL_REQUIRED - workedMinutes;
 
-        let expectedEnd;
+        // expected end time based on work done
+        const expectedEnd = remaining > 0
+        ? (lastOutTime ?? 0) + remaining
+        : lastOutTime;
 
-        if (remaining > 0) {
-            expectedEnd = lastOutTime + remaining;
-        } else {
-            expectedEnd = lastOutTime; 
+        // base buffer
+        let buffer = OFFICE_END - expectedEnd;
+
+        // ⛔ employee is OUT → buffer should reduce with real time
+        if (lastIn === null && lastOutTime !== null) {
+            const now = new Date();
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+            const afterOut = Math.max(0, nowMinutes - lastOutTime);
+            buffer -= afterOut;
         }
-
-        const buffer = OFFICE_END - expectedEnd;
 
         const span = document.createElement("span");
         span.style.marginLeft = "10px";
@@ -169,5 +176,3 @@
     });
 
 })();
-
-
